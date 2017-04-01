@@ -13,9 +13,10 @@ from pytest_catchlog.common import catching_logs, logging_at_level
 class LogCaptureFixture(object):
     """Provides access and control of log capturing."""
 
-    def __init__(self, item):
+    def __init__(self, item, monkeypatch):
         """Creates a new funcarg."""
         self._item = item
+        self._monkeypatch = monkeypatch
 
     @property
     def handler(self):
@@ -55,7 +56,7 @@ class LogCaptureFixture(object):
         """
 
         obj = logger and logging.getLogger(logger) or self.handler
-        obj.setLevel(level)
+        self._monkeypatch.setattr(obj, 'level', logging._checkLevel(level))
 
     def at_level(self, level, logger=None):
         """Context manager that sets the level for capturing of logs.
@@ -140,7 +141,7 @@ class CompatLogCaptureFixture(LogCaptureFixture):
 
 
 @pytest.fixture
-def caplog(request):
+def caplog(request, monkeypatch):
     """Access and control log capturing.
 
     Captured logs are available through the following methods::
@@ -149,6 +150,6 @@ def caplog(request):
     * caplog.records()       -> list of logging.LogRecord instances
     * caplog.record_tuples() -> list of (logger_name, level, message) tuples
     """
-    return CompatLogCaptureFixture(request.node)
+    return CompatLogCaptureFixture(request.node, monkeypatch)
 
 capturelog = caplog

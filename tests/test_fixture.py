@@ -14,11 +14,12 @@ def test_fixture_help(testdir):
     result.stdout.fnmatch_lines(['*caplog*'])
 
 
-def test_change_level(caplog):
+def test_change_level(caplog, monkeypatch):
     caplog.set_level(logging.INFO)
     logger.debug('handler DEBUG level')
     logger.info('handler INFO level')
 
+    assert sublogger.level == logging.NOTSET
     caplog.set_level(logging.CRITICAL, logger=sublogger.name)
     sublogger.warning('logger WARNING level')
     sublogger.critical('logger CRITICAL level')
@@ -27,6 +28,9 @@ def test_change_level(caplog):
     assert 'INFO' in caplog.text
     assert 'WARNING' not in caplog.text
     assert 'CRITICAL' in caplog.text
+    assert sublogger.level == logging.CRITICAL
+    monkeypatch.undo()
+    assert sublogger.level == logging.NOTSET
 
 
 def test_with_statement(caplog):
